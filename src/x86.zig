@@ -11,6 +11,7 @@ const prolog =
     \\
     \\global main
     \\extern printf
+    \\extern memset
     \\
     \\section .note.GNU-stack noalloc noexec nowrite progbits
     \\
@@ -23,36 +24,39 @@ const prolog =
     \\
     \\section .text
     \\
+    \\clear_cells:
+    \\push DWORD (30000 * 4)
+    \\push DWORD 0
+    \\push DWORD cells
+    \\call memset
+    \\add  esp, 12
+    \\ret
+    \\
     \\print_char:
     \\push ecx ; save ECX, printf may mutate it
     \\mov eax, [cells + ecx*4]
     \\cmp eax, 10 ; (cells[ptr] == '\n') -> good char exception
-    \\je PRINT_GOOD_CHAR
+    \\je .PRINT_GOOD_CHAR
     \\cmp eax, 32 ; (cells[ptr] < ' ') -> bad char
-    \\jl PRINT_BAD_CHAR
+    \\jl .PRINT_BAD_CHAR
     \\cmp eax, 126 ; (cells[ptr] > '~') -> bad char
-    \\jg PRINT_BAD_CHAR
-    \\PRINT_GOOD_CHAR:
+    \\jg .PRINT_BAD_CHAR
+    \\.PRINT_GOOD_CHAR:
     \\push eax
     \\push good_output_fmt
-    \\jmp PRINT_EXIT
-    \\PRINT_BAD_CHAR:
+    \\jmp .PRINT_EXIT
+    \\.PRINT_BAD_CHAR:
     \\push eax
     \\push bad_output_fmt
-    \\jmp PRINT_EXIT
-    \\PRINT_EXIT:
+    \\jmp .PRINT_EXIT
+    \\.PRINT_EXIT:
     \\call printf
     \\add esp, 8
     \\pop ecx  ; get back saved ECX value
     \\ret
     \\
     \\main:
-    \\mov ecx, 0
-    \\mov DWORD [cells + ecx*4], 65
-    \\call print_char
-    \\mov ecx, 1
-    \\mov DWORD [cells + ecx*4], 66
-    \\call print_char
+    \\call clear_cells
     \\
 ;
 
