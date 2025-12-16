@@ -7,7 +7,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const input = "+++.";
+    const input = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
     var reader = std.Io.Reader.fixed(input);
 
     const ir_code = try IR.lex(&reader, allocator);

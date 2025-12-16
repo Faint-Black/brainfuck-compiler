@@ -16,7 +16,7 @@ const prolog =
     \\section .note.GNU-stack noalloc noexec nowrite progbits
     \\
     \\section .data
-    \\    good_output_fmt db "%c", 0x0A, 0x00
+    \\    good_output_fmt db "%c", 0x00
     \\    bad_output_fmt  db "Bad Char: '%d'", 0x0A, 0x00
     \\
     \\section .bss
@@ -58,6 +58,7 @@ const prolog =
     \\main:
     \\call clear_cells
     \\
+    \\
 ;
 
 const epilog =
@@ -67,12 +68,38 @@ const epilog =
 ;
 
 pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
-    var assembly_buffer: std.ArrayList(u8) = .empty;
-    defer assembly_buffer.deinit(allocator);
+    var allocating_writer = std.Io.Writer.Allocating.init(allocator);
+    defer allocating_writer.deinit();
+    const writer = &allocating_writer.writer;
 
-    try assembly_buffer.appendSlice(allocator, prolog);
-    _ = ir_array;
-    try assembly_buffer.appendSlice(allocator, epilog);
+    _ = try writer.write(prolog);
+    for (ir_array) |ir| {
+        switch (ir.ir_type) {
+            .move => {
+                try writer.print("add ecx, {}\n", .{ir.ir_value});
+            },
+            .change => {
+                try writer.print("mov eax, DWORD [cells + ecx*4]\n", .{});
+                try writer.print("add eax, DWORD {}\n", .{ir.ir_value});
+                try writer.print("mov DWORD [cells + ecx*4], eax\n", .{});
+            },
+            .branch_forwards => {
+                try writer.print("cmp DWORD [cells + ecx*4], 0\n", .{});
+                try writer.print("je .END_BRACKET_{}\n", .{ir.ir_value});
+                try writer.print(".START_BRACKET_{}:\n", .{ir.ir_value});
+            },
+            .branch_backwards => {
+                try writer.print("cmp DWORD [cells + ecx*4], 0\n", .{});
+                try writer.print("jne .START_BRACKET_{}\n", .{ir.ir_value});
+                try writer.print(".END_BRACKET_{}:\n", .{ir.ir_value});
+            },
+            .out => {
+                try writer.print("call print_char\n", .{});
+            },
+            .in => {},
+        }
+    }
+    _ = try writer.write(epilog);
 
-    return try assembly_buffer.toOwnedSlice(allocator);
+    return try allocating_writer.toOwnedSlice();
 }

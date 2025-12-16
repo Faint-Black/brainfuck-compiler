@@ -29,8 +29,10 @@ pub const IR = struct {
         move,
         /// '+'(positive value) and '-'(negative value)
         change,
-        /// '['(positive jump id) and ']'(negative jump id)
-        branch,
+        /// '['(unique label id)
+        branch_forwards,
+        /// ']'(matching label id)
+        branch_backwards,
         /// '.'(unused value)
         out,
         /// ','(unused value)
@@ -41,7 +43,8 @@ pub const IR = struct {
         switch (self.ir_type) {
             .move => try writer.print("MOVE {}", .{self.ir_value}),
             .change => try writer.print("CHANGE {}", .{self.ir_value}),
-            .branch => try writer.print("BRANCH {}", .{self.ir_value}),
+            .branch_forwards => try writer.print("BRANCH_F {}", .{self.ir_value}),
+            .branch_backwards => try writer.print("BRANCH_B {}", .{self.ir_value}),
             .out => try writer.print("OUT", .{}),
             .in => try writer.print("IN", .{}),
         }
@@ -52,7 +55,7 @@ pub const IR = struct {
         defer ir_array.deinit(allocator);
 
         var jump_id_stack = JumpStack.empty;
-        var current_jump_id: i32 = 1;
+        var current_jump_id: i32 = 0;
 
         while (reader.takeByte()) |c| {
             switch (c) {
@@ -61,12 +64,11 @@ pub const IR = struct {
                 '+' => try ir_array.append(allocator, .{ .ir_value = 1, .ir_type = .change }),
                 '-' => try ir_array.append(allocator, .{ .ir_value = -1, .ir_type = .change }),
                 '[' => {
-                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.push(current_jump_id), .ir_type = .branch });
+                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.push(current_jump_id), .ir_type = .branch_forwards });
                     current_jump_id += 1;
                 },
                 ']' => {
-                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.pop() * -1, .ir_type = .branch });
-                    current_jump_id -= 1;
+                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.pop(), .ir_type = .branch_backwards });
                 },
                 '.' => try ir_array.append(allocator, .{ .ir_value = 0, .ir_type = .out }),
                 ',' => try ir_array.append(allocator, .{ .ir_value = 0, .ir_type = .in }),
@@ -97,20 +99,22 @@ test "jump stack" {
 }
 
 test "simple lexing" {
-    const input = "+[+-[+]>]<[]";
+    const input = "Hellooo  [+[  +-[ + ]>]<[]\n]\n";
     const output =
+        \\BRANCH_F 0
         \\CHANGE 1
-        \\BRANCH 1
+        \\BRANCH_F 1
         \\CHANGE 1
         \\CHANGE -1
-        \\BRANCH 2
+        \\BRANCH_F 2
         \\CHANGE 1
-        \\BRANCH -2
+        \\BRANCH_B 2
         \\MOVE 1
-        \\BRANCH -1
+        \\BRANCH_B 1
         \\MOVE -1
-        \\BRANCH 1
-        \\BRANCH -1
+        \\BRANCH_F 3
+        \\BRANCH_B 3
+        \\BRANCH_B 0
         \\
     ;
     const allocator = std.testing.allocator;
