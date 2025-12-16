@@ -2,11 +2,13 @@ const std = @import("std");
 
 pub const CLAP = struct {
     input_filepath: ?[]const u8 = null,
+    output_filepath: ?[]const u8 = null,
     print_help: bool = false,
     print_version: bool = false,
 
     pub fn deinit(self: CLAP, allocator: std.mem.Allocator) void {
         if (self.input_filepath) |mem| allocator.free(mem);
+        if (self.output_filepath) |mem| allocator.free(mem);
     }
 
     pub fn parseArgs(allocator: std.mem.Allocator) !CLAP {
@@ -15,9 +17,18 @@ pub const CLAP = struct {
         var iterator = try std.process.ArgIterator.initWithAllocator(allocator);
         defer iterator.deinit();
         var counter: usize = 0;
+
+        var expecting_output_filepath: bool = false;
         while (iterator.next()) |arg| : (counter += 1) {
             // skip binary path
             if (counter == 0) continue;
+
+            if (expecting_output_filepath) {
+                if (result.output_filepath != null) return error.OnlyNeedOneOutFilepath;
+                result.output_filepath = try allocator.dupe(u8, arg);
+                expecting_output_filepath = false;
+                continue;
+            }
 
             if (std.mem.eql(u8, arg, "-h")) {
                 result.print_help = true;
@@ -25,10 +36,12 @@ pub const CLAP = struct {
                 result.print_help = true;
             } else if (std.mem.eql(u8, arg, "--version")) {
                 result.print_version = true;
+            } else if (std.mem.eql(u8, arg, "-o")) {
+                expecting_output_filepath = true;
+            } else if (std.mem.eql(u8, arg, "--output")) {
+                expecting_output_filepath = true;
             } else {
-                if (result.input_filepath != null) {
-                    return error.OnlyNeedOneFilepath;
-                }
+                if (result.input_filepath != null) return error.OnlyNeedOneInFilepath;
                 result.input_filepath = try allocator.dupe(u8, arg);
             }
         }
@@ -47,10 +60,10 @@ pub const CLAP = struct {
         \\Brainfuck Compiler, a brainfuck compiler...
         \\
         \\SYNOPSIS
-        \\       brainfuck-compiler [source-file]
+        \\       brainfuck-compiler [--help|--version] -o output-file input-file
         \\
         \\USAGE
-        \\       brainfuck-compiler brainfuck-source.txt
+        \\       brainfuck-compiler brainfuck-source.txt -o assembly.asm
         \\
     ;
 

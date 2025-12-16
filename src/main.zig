@@ -18,6 +18,7 @@ pub fn main() !void {
 
     var reader_buffer: [4096]u8 = undefined;
     var file = try std.fs.cwd().openFile(clap.input_filepath.?, .{});
+    defer file.close();
     var file_reader = file.reader(&reader_buffer);
     const reader = &file_reader.interface;
 
@@ -27,7 +28,13 @@ pub fn main() !void {
     const x86_code = try x86.codegen(ir_code, allocator);
     defer allocator.free(x86_code);
 
-    std.debug.print("{s}\n", .{x86_code});
+    if (clap.output_filepath) |output_filepath| {
+        const out_file = try std.fs.cwd().createFile(output_filepath, std.fs.File.CreateFlags{ .read = false });
+        defer out_file.close();
+        try out_file.writeAll(x86_code);
+    } else {
+        std.debug.print("{s}\n", .{x86_code});
+    }
 }
 
 test "test index" {
