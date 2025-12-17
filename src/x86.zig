@@ -1,4 +1,4 @@
-//! ECX register is to always hold the current cell pointer
+//! ECX register is to always hold the current cell index.
 
 const std = @import("std");
 const IR = @import("ir.zig").IR;
@@ -17,21 +17,25 @@ const prolog =
     \\
     \\section .data
     \\    good_output_fmt db "%c", 0x00
-    \\    bad_output_fmt  db "Bad Char: '%d'", 0x0A, 0x00
+    \\    bad_output_fmt  db "Invalid Character: '%d'", 0x0A, 0x00
     \\
     \\section .bss
     \\    cells resd 30000
     \\
     \\section .text
     \\
+    \\;; Set all cells to zero
     \\clear_cells:
+    \\push ecx ; save ECX, memset may mutate it
     \\push DWORD (30000 * 4)
     \\push DWORD 0
     \\push DWORD cells
     \\call memset
     \\add  esp, 12
+    \\pop ecx  ; get back saved ECX value
     \\ret
     \\
+    \\;; Print integer at current cell
     \\print_char:
     \\push ecx ; save ECX, printf may mutate it
     \\mov eax, [cells + ecx*4]
@@ -56,6 +60,7 @@ const prolog =
     \\ret
     \\
     \\main:
+    \\xor ecx, ecx
     \\call clear_cells
     \\
     \\
@@ -76,10 +81,10 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
     for (ir_array) |ir| {
         switch (ir.ir_type) {
             .move => {
-                try writer.print("add ecx, {}\n", .{ir.ir_value});
+                try writer.print("add DWORD ecx, {}\n", .{ir.ir_value});
             },
             .change => {
-                try writer.print("add DWORD [cells + ecx*4], DWORD {}\n", .{ir.ir_value});
+                try writer.print("add DWORD [cells + ecx*4], {}\n", .{ir.ir_value});
             },
             .branch_forwards => {
                 try writer.print("cmp DWORD [cells + ecx*4], 0\n", .{});
