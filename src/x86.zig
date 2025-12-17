@@ -12,6 +12,7 @@ const prolog =
     \\global main
     \\extern printf
     \\extern memset
+    \\extern getchar
     \\
     \\section .note.GNU-stack noalloc noexec nowrite progbits
     \\
@@ -59,6 +60,14 @@ const prolog =
     \\pop ecx  ; get back saved ECX value
     \\ret
     \\
+    \\;; Get character from stdin and store it on the current cell
+    \\get_char:
+    \\push ecx ; save ECX, getchar may mutate it
+    \\call getchar
+    \\pop ecx  ; get back saved ECX value
+    \\mov [cells + ecx*4], eax
+    \\ret
+    \\
     \\main:
     \\xor ecx, ecx
     \\call clear_cells
@@ -99,7 +108,9 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
             .out => {
                 try writer.print("call print_char\n", .{});
             },
-            .in => {},
+            .in => {
+                try writer.print("call get_char\n", .{});
+            },
         }
     }
     _ = try writer.write(epilog);

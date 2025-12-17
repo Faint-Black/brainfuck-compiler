@@ -11,6 +11,12 @@ all: $(COMPILER)
 	./hello-world.exe > hello-world.cmp
 	diff -u --color=always hello-world.out hello-world.cmp
 
+	$(COMPILER) stdin-get.brainfuck -o stdin-get.asm
+	$(ASSEMBLER) -f elf32 stdin-get.asm -o stdin-get.o
+	$(LINKER) -m32 stdin-get.o -o stdin-get.exe
+	./stdin-get.exe < stdin-get.in > stdin-get.cmp
+	diff -u --color=always stdin-get.out stdin-get.cmp
+
 $(COMPILER):
 	cd ../ && zig build
 
