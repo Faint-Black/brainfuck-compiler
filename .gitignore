@@ -3,3 +3,5 @@ zig-out/
 a.out
 *.o
 *.asm
+*.cmp
+*.exe

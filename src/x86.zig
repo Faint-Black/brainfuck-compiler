@@ -79,9 +79,7 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
                 try writer.print("add ecx, {}\n", .{ir.ir_value});
             },
             .change => {
-                try writer.print("mov eax, DWORD [cells + ecx*4]\n", .{});
-                try writer.print("add eax, DWORD {}\n", .{ir.ir_value});
-                try writer.print("mov DWORD [cells + ecx*4], eax\n", .{});
+                try writer.print("add DWORD [cells + ecx*4], DWORD {}\n", .{ir.ir_value});
             },
             .branch_forwards => {
                 try writer.print("cmp DWORD [cells + ecx*4], 0\n", .{});
