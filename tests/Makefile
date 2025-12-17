@@ -5,7 +5,7 @@ ASSEMBLER = nasm
 LINKER    = gcc -no-pie
 
 all: $(COMPILER)
-	$(COMPILER) hello-world.in -o hello-world.asm
+	$(COMPILER) hello-world.brainfuck -o hello-world.asm
 	$(ASSEMBLER) -f elf32 hello-world.asm -o hello-world.o
 	$(LINKER) -m32 hello-world.o -o hello-world.exe
 	./hello-world.exe > hello-world.cmp
