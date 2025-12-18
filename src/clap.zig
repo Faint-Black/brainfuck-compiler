@@ -1,10 +1,21 @@
 const std = @import("std");
 
+pub const TargetPlatform = enum {
+    none,
+    x86,
+};
+
+const target_from_string_map = std.StaticStringMap(TargetPlatform).initComptime(.{
+    .{ "--target=none", TargetPlatform.none },
+    .{ "--target=x86", TargetPlatform.x86 },
+});
+
 pub const CLAP = struct {
     input_filepath: ?[]const u8 = null,
     output_filepath: ?[]const u8 = null,
     print_help: bool = false,
     print_version: bool = false,
+    target_platform: TargetPlatform = .none,
 
     pub fn deinit(self: CLAP, allocator: std.mem.Allocator) void {
         if (self.input_filepath) |mem| allocator.free(mem);
@@ -30,7 +41,9 @@ pub const CLAP = struct {
                 continue;
             }
 
-            if (std.mem.eql(u8, arg, "-h")) {
+            if (target_from_string_map.get(arg)) |valid_target| {
+                result.target_platform = valid_target;
+            } else if (std.mem.eql(u8, arg, "-h")) {
                 result.print_help = true;
             } else if (std.mem.eql(u8, arg, "--help")) {
                 result.print_help = true;
@@ -45,9 +58,11 @@ pub const CLAP = struct {
                 result.input_filepath = try allocator.dupe(u8, arg);
             }
         }
+
         if (!result.anyInfoFlagIsActive() and result.input_filepath == null) {
             return error.NoSourceProvided;
         }
+
         return result;
     }
 
@@ -60,10 +75,15 @@ pub const CLAP = struct {
         \\Brainfuck Compiler, a brainfuck compiler...
         \\
         \\SYNOPSIS
-        \\       brainfuck-compiler [--help|--version] -o output-file input-file
+        \\       brainfuck-compiler [--target=<platform>] [-o output] [input]
         \\
         \\USAGE
-        \\       brainfuck-compiler brainfuck-source.txt -o assembly.asm
+        \\       brainfuck-compiler --target=x86 brainfuck-source.txt -o assembly.asm
+        \\       brainfuck-compiler brainfuck-source.txt --target=x86
+        \\
+        \\PLATFORMS
+        \\       x86
+        \\              32-bit x86 assembly.
         \\
     ;
 

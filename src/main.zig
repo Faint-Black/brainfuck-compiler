@@ -28,15 +28,21 @@ pub fn main() !void {
     const optimized_ir_code = try optimize(raw_ir_code, allocator);
     defer allocator.free(optimized_ir_code);
 
-    const x86_code = try x86.codegen(optimized_ir_code, allocator);
-    defer allocator.free(x86_code);
+    const assembly: []const u8 = switch (clap.target_platform) {
+        .none => error.NoTargetProvided,
+        .x86 => try x86.codegen(optimized_ir_code, allocator),
+    } catch |err| {
+        std.debug.print("ERROR: No valid target provided!\n", .{});
+        return err;
+    };
+    defer allocator.free(assembly);
 
     if (clap.output_filepath) |output_filepath| {
         const out_file = try std.fs.cwd().createFile(output_filepath, std.fs.File.CreateFlags{ .read = false });
         defer out_file.close();
-        try out_file.writeAll(x86_code);
+        try out_file.writeAll(assembly);
     } else {
-        std.debug.print("{s}\n", .{x86_code});
+        std.debug.print("{s}\n", .{assembly});
     }
 }
 
