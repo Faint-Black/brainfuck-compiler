@@ -4,8 +4,8 @@ const IR = @import("ir.zig").IR;
 pub fn optimize(raw_ir: []IR, allocator: std.mem.Allocator) ![]IR {
     const accumulated_ir = try accumulate(raw_ir, allocator);
     defer allocator.free(accumulated_ir);
-    const shaved_ir = try shave(accumulated_ir, allocator);
-    return shaved_ir;
+    const cleaned_ir = try clean(accumulated_ir, allocator);
+    return cleaned_ir;
 }
 
 /// will reduce consecutive move and change instructions into a single instruction
@@ -39,7 +39,7 @@ fn accumulate(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
 
 /// will remove redundant intermediary representation code
 /// example: [MOVE:0, CHANGE:0] will reduce to []
-fn shave(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
+fn clean(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     var result: std.ArrayList(IR) = .empty;
     defer result.deinit(allocator);
 
@@ -78,7 +78,7 @@ test "accumulation" {
     try std.testing.expectEqualStrings(output, writer.buffered());
 }
 
-test "shaving" {
+test "cleaning" {
     const input = "+++---.<<<>>>>.<>";
     const output =
         \\OUT
@@ -97,9 +97,9 @@ test "shaving" {
 
     const accumulated_ir_array = try accumulate(ir_array, allocator);
     defer allocator.free(accumulated_ir_array);
-    const shaved_ir_array = try shave(accumulated_ir_array, allocator);
-    defer allocator.free(shaved_ir_array);
+    const cleaned_ir_array = try clean(accumulated_ir_array, allocator);
+    defer allocator.free(cleaned_ir_array);
 
-    for (shaved_ir_array) |ir| try writer.print("{f}\n", .{ir});
+    for (cleaned_ir_array) |ir| try writer.print("{f}\n", .{ir});
     try std.testing.expectEqualStrings(output, writer.buffered());
 }
