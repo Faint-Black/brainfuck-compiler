@@ -5,10 +5,12 @@ const IR = @import("ir.zig").IR;
 const x86 = @import("x86.zig");
 
 pub fn main() !void {
+    // set up allocator
     var gpa = std.heap.DebugAllocator(.{}).init;
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
+    // parse command line arguments
     const clap = try CLAP.parseArgs(allocator);
     defer clap.deinit(allocator);
     if (clap.anyInfoFlagIsActive()) {
@@ -17,17 +19,20 @@ pub fn main() !void {
         return;
     }
 
+    // set up readers/writers/buffers and open input source file
     var reader_buffer: [4096]u8 = undefined;
     var file = try std.fs.cwd().openFile(clap.input_filepath.?, .{});
     defer file.close();
     var file_reader = file.reader(&reader_buffer);
     const reader = &file_reader.interface;
 
+    // turn file contents into intermediary representation
     const raw_ir_code = try IR.lex(reader, allocator);
     defer allocator.free(raw_ir_code);
     const optimized_ir_code = try optimize(raw_ir_code, allocator);
     defer allocator.free(optimized_ir_code);
 
+    // emit output assembly for given target
     const assembly: []const u8 = switch (clap.target_platform) {
         .none => error.NoTargetProvided,
         .x86 => try x86.codegen(optimized_ir_code, allocator),
@@ -37,6 +42,7 @@ pub fn main() !void {
     };
     defer allocator.free(assembly);
 
+    // either write assembly to file or print it to stdout
     if (clap.output_filepath) |output_filepath| {
         const out_file = try std.fs.cwd().createFile(output_filepath, std.fs.File.CreateFlags{ .read = false });
         defer out_file.close();
@@ -48,6 +54,7 @@ pub fn main() !void {
 
 test "test index" {
     comptime {
+        _ = @import("clap.zig");
         _ = @import("ir.zig");
         _ = @import("optimizer.zig");
         _ = @import("x86.zig");

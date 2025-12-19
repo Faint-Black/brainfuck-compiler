@@ -4,7 +4,7 @@ const std = @import("std");
 const IR = @import("ir.zig").IR;
 
 const prolog =
-    \\;;; Compile with:
+    \\;;; Assemble with:
     \\;;;  nasm -f elf32 <source>.asm -o <object>.o
     \\;;; Link with:
     \\;;;  gcc -no-pie -m32 <object>.o

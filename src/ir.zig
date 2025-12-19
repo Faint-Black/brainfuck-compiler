@@ -54,7 +54,7 @@ pub const IR = struct {
         var ir_array: std.ArrayList(IR) = .empty;
         defer ir_array.deinit(allocator);
 
-        var jump_id_stack = JumpStack.empty;
+        var jump_id_stack: JumpStack = .empty;
         var current_jump_id: i32 = 0;
 
         while (reader.takeByte()) |c| {
@@ -83,7 +83,7 @@ pub const IR = struct {
 };
 
 test "jump stack" {
-    var js = JumpStack.empty;
+    var js: JumpStack = .empty;
 
     try std.testing.expectEqual(1, try js.push(1));
     try std.testing.expectEqual(2, try js.push(2));

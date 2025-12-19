@@ -34,22 +34,20 @@ fn accumulate(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     }
     try result.append(allocator, accumulator);
 
-    return result.toOwnedSlice(allocator);
+    return try result.toOwnedSlice(allocator);
 }
 
 /// will remove redundant intermediary representation code
-/// example: [MOVE:0, CHANGE:0] will reduce to []
+/// example: [MOVE:0, CHANGE:0] will both be discarded
 fn clean(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     var result: std.ArrayList(IR) = .empty;
     defer result.deinit(allocator);
-
     for (ir_array) |ir| {
         const empty_move = (ir.ir_type == .move and ir.ir_value == 0);
         const empty_change = (ir.ir_type == .change and ir.ir_value == 0);
         if (!empty_move and !empty_change) try result.append(allocator, ir);
     }
-
-    return result.toOwnedSlice(allocator);
+    return try result.toOwnedSlice(allocator);
 }
 
 test "accumulation" {

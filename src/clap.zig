@@ -5,7 +5,7 @@ pub const TargetPlatform = enum {
     x86,
 };
 
-const target_from_string_map = std.StaticStringMap(TargetPlatform).initComptime(.{
+const target_flag_map = std.StaticStringMap(TargetPlatform).initComptime(.{
     .{ "--target=none", TargetPlatform.none },
     .{ "--target=x86", TargetPlatform.x86 },
 });
@@ -41,7 +41,7 @@ pub const CLAP = struct {
                 continue;
             }
 
-            if (target_from_string_map.get(arg)) |valid_target| {
+            if (target_flag_map.get(arg)) |valid_target| {
                 result.target_platform = valid_target;
             } else if (std.mem.eql(u8, arg, "-h")) {
                 result.print_help = true;
