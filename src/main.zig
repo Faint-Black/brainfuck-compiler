@@ -2,7 +2,6 @@ const std = @import("std");
 const optimize = @import("optimizer.zig").optimize;
 const CLAP = @import("clap.zig").CLAP;
 const IR = @import("ir.zig").IR;
-const x86 = @import("x86.zig");
 
 pub fn main() !void {
     // set up allocator
@@ -35,7 +34,8 @@ pub fn main() !void {
     // emit output assembly for given target
     const assembly: []const u8 = switch (clap.target_platform) {
         .none => error.NoTargetProvided,
-        .x86 => try x86.codegen(optimized_ir_code, allocator),
+        .x86 => try @import("x86.zig").codegen(optimized_ir_code, allocator),
+        .x64 => try @import("x64.zig").codegen(optimized_ir_code, allocator),
     } catch |err| {
         std.debug.print("ERROR: No valid target provided!\n", .{});
         return err;

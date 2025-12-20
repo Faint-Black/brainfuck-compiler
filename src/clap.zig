@@ -3,11 +3,13 @@ const std = @import("std");
 pub const TargetPlatform = enum {
     none,
     x86,
+    x64,
 };
 
 const target_flag_map = std.StaticStringMap(TargetPlatform).initComptime(.{
     .{ "--target=none", TargetPlatform.none },
     .{ "--target=x86", TargetPlatform.x86 },
+    .{ "--target=x64", TargetPlatform.x64 },
 });
 
 pub const CLAP = struct {
@@ -79,11 +81,13 @@ pub const CLAP = struct {
         \\
         \\USAGE
         \\       brainfuck-compiler --target=x86 brainfuck-source.txt -o assembly.asm
-        \\       brainfuck-compiler brainfuck-source.txt --target=x86
+        \\       brainfuck-compiler brainfuck-source.txt --target=x64
         \\
         \\PLATFORMS
         \\       x86
         \\              32-bit x86 assembly.
+        \\       x64
+        \\              64-bit x86 assembly.
         \\
     ;
 
