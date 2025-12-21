@@ -3,8 +3,8 @@
 # cell(2)  = tmp
 # cell(16) = nth fibonacci element you want to calculate
 
-cell(0) = 31
-+++++++++++++++++++++++++++++++
+cell(0) = 40
+++++++++++++++++++++++++++++++++++++++++
 
 while cell(0) minus minus loop
 [
