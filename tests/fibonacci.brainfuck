@@ -1,0 +1,12 @@
+Fifth fibonacci element
++++++
+
+From https://gist dot github dot com/wxsBSD/31e2e9cf8b41d624403c91e6d7e6da3f
+Fibonacci nth element calculator:
+>+>+<<[->>[->+>+<<]<[->>+<<]>>[-<+>]>[-<<<+>>>]<<<<]>><[-]>>[-]>[-]<<[-<<+>>]<<
+
+From https://esolangs dot org/wiki/brainfuck_algorithms
+Print string (plus newline) from int:
+>[-]>[-]+>[-]+<[>[-<-<<[->+>+<<]>[-<+>]>>]++++++++++>[-]+>[-]>[-]>[-]<<<<<[->-[>+>>]
+>[[-<+>]+>+>>]<<<<<]>>-[-<<+>>]<[-]++++++++[-<++++++>]>>[-<<+>>]<<]<[.[-]<]
+++++++++++.----------<[-]
