@@ -3,13 +3,13 @@
 # cell(2)  = tmp
 # cell(16) = nth fibonacci element you want to calculate
 
-cell(0) = 30
+cell(0) = 31
 +++++++++++++++++++++++++++++++
 
 while cell(0) minus minus loop
 [
 
-    Increment cell(1); then copy cell(1) to cell(2)
+    Copy cell(1) to cell(2); then increment cell(1)
     >
     [->+>+<<]>>[<<+>>-]<<
     +
@@ -35,7 +35,7 @@ while cell(0) minus minus loop
     >[[-<+>]+>+>>]<<<<<]>>-[-<<+>>]<[-]++++++++[-<++++++>]>>[-<<+>>]<<]<[.[-]<]
     ++++++++++.----------<[-]
 
-    Go to cell(0)
+    Go back to cell(0)
     <<<<<<<<<<<<<<<<
 
 -]
