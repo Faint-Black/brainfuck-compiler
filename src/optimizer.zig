@@ -1,6 +1,7 @@
 const std = @import("std");
 const IR = @import("ir.zig").IR;
 
+/// takes in a raw IR array and outputs an optimized IR array
 pub fn optimize(raw_ir: []IR, allocator: std.mem.Allocator) ![]IR {
     const cleared_ir = try clear(raw_ir, allocator);
     defer allocator.free(cleared_ir);
@@ -17,18 +18,21 @@ fn accumulate(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     var result: std.ArrayList(IR) = .empty;
     defer result.deinit(allocator);
     var accumulator: IR = ir_array[0];
-    var current_ir: IR = undefined;
-    var previous_ir: IR = undefined;
+    var current: IR = undefined;
+    var previous: IR = undefined;
     for (1..ir_array.len) |i| {
-        current_ir = ir_array[i];
-        previous_ir = ir_array[i - 1];
-        const equal_types = (current_ir.ir_type == previous_ir.ir_type);
-        const can_accumulate = (current_ir.ir_type == .change or current_ir.ir_type == .move);
-        if (equal_types and can_accumulate) {
-            accumulator.ir_value += current_ir.ir_value;
+        current = ir_array[i];
+        previous = ir_array[i - 1];
+        const can_accumulate = switch (current.ir_type) {
+            .change => true,
+            .move => true,
+            else => false,
+        };
+        if (current.eqlType(previous) and can_accumulate) {
+            accumulator.ir_value += current.ir_value;
         } else {
             try result.append(allocator, accumulator);
-            accumulator = current_ir;
+            accumulator = current;
         }
     }
     try result.append(allocator, accumulator);
