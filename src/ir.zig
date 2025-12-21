@@ -37,6 +37,8 @@ pub const IR = struct {
         out,
         /// ','(unused value)
         in,
+        /// '[-]'(unused value)
+        clear_cell,
     },
 
     pub fn format(self: IR, writer: *std.Io.Writer) std.Io.Writer.Error!void {
@@ -47,7 +49,20 @@ pub const IR = struct {
             .branch_backwards => try writer.print("BRANCH_B {}", .{self.ir_value}),
             .out => try writer.print("OUT", .{}),
             .in => try writer.print("IN", .{}),
+            .clear_cell => try writer.print("CLEAR", .{}),
         }
+    }
+
+    pub fn eqlType(self: IR, other: IR) bool {
+        return self.ir_type == other.ir_type;
+    }
+
+    pub fn eqlValue(self: IR, other: IR) bool {
+        return self.ir_value == other.ir_value;
+    }
+
+    pub fn eql(self: IR, other: IR) bool {
+        return self.eqlType(other) and self.eqlValue(other);
     }
 
     pub fn lex(reader: *std.Io.Reader, allocator: std.mem.Allocator) ![]IR {
