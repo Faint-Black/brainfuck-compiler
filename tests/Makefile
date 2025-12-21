@@ -1,6 +1,6 @@
 .PHONY: check verify clean target_x86 target_x64
 
-BRAINFUCKS = $(wildcard *.brainfuck)
+BRAINFUCKS = $(wildcard *.bf)
 COMPILER   = ../zig-out/bin/brainfuck-compiler
 
 check: verify $(COMPILER) target_x86 target_x64
@@ -22,8 +22,8 @@ $(COMPILER):
 target_x86:
 	@for f in $(BRAINFUCKS); do \
 		echo "testing \"$$f\" for target x86_32..."; \
-		BASE=$$(basename -s .brainfuck $$f); \
-		$(COMPILER) --target=x86 $$BASE.brainfuck -o $$BASE.x86.asm && \
+		BASE=$$(basename -s .bf $$f); \
+		$(COMPILER) --target=x86 $$BASE.bf -o $$BASE.x86.asm && \
 		nasm -f elf32 $$BASE.x86.asm -o $$BASE.x86.o && \
 		gcc -no-pie -m32 $$BASE.x86.o -o $$BASE.x86.exe && \
 		qemu-i386 ./$$BASE.x86.exe < $$BASE.in > $$BASE.x86.cmp && \
@@ -34,8 +34,8 @@ target_x86:
 target_x64:
 	@for f in $(BRAINFUCKS); do \
 		echo "testing \"$$f\" for target x86_64..."; \
-		BASE=$$(basename -s .brainfuck $$f); \
-		$(COMPILER) --target=x64 $$BASE.brainfuck -o $$BASE.x64.asm && \
+		BASE=$$(basename -s .bf $$f); \
+		$(COMPILER) --target=x64 $$BASE.bf -o $$BASE.x64.asm && \
 		nasm -f elf64 $$BASE.x64.asm -o $$BASE.x64.o && \
 		gcc -no-pie -m64 $$BASE.x64.o -o $$BASE.x64.exe && \
 		qemu-x86_64 ./$$BASE.x64.exe < $$BASE.in > $$BASE.x64.cmp && \
