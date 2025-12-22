@@ -113,6 +113,11 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
             .set_cell => {
                 try writer.print("mov DWORD [cells + rcx*4], {}\n", .{ir.ir_value});
             },
+            .transfer_accumulating => {
+                try writer.print("mov eax, DWORD [cells + rcx*4]\n", .{});
+                try writer.print("add DWORD [(cells + ({} * 4)) + rcx*4], eax\n", .{ir.ir_value});
+                try writer.print("mov DWORD [cells + rcx*4], 0\n", .{});
+            },
         }
     }
     _ = try writer.write(epilog);

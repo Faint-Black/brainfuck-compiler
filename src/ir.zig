@@ -37,8 +37,10 @@ pub const IR = struct {
         out,
         /// ','(unused value)
         in,
-        /// sets current cell to a certain value
+        /// cell(current) = value
         set_cell,
+        /// cell(current + offset) += cell(current); cell(current) = 0
+        transfer_accumulating,
     },
 
     pub fn format(self: IR, writer: *std.Io.Writer) std.Io.Writer.Error!void {
@@ -50,6 +52,7 @@ pub const IR = struct {
             .out => try writer.print("OUT", .{}),
             .in => try writer.print("IN", .{}),
             .set_cell => try writer.print("SET {}", .{self.ir_value}),
+            .transfer_accumulating => try writer.print("TRANSFER(+) {}", .{self.ir_value}),
         }
     }
 

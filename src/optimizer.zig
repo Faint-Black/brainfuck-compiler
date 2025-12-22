@@ -62,6 +62,9 @@ fn substitute(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
         if (patterns.clearIdentify(ir_array[i..])) |matched| {
             i += matched.len - 1;
             try result.append(allocator, patterns.clearFromSlice(matched));
+        } else if (patterns.transferAccumulatingIdentify(ir_array[i..])) |matched| {
+            i += matched.len - 1;
+            try result.append(allocator, patterns.transferAccumulatingFromSlice(matched));
         } else {
             try result.append(allocator, ir_array[i]);
         }
@@ -120,10 +123,12 @@ test "cell cleaning" {
 }
 
 test "pattern substitution" {
-    const input = "[-][-]";
+    const input = "[-][-][>>>>+<<<<-][-<<+>>]";
     const output =
         \\SET 0
         \\SET 0
+        \\TRANSFER(+) 4
+        \\TRANSFER(+) -2
         \\
     ;
 
