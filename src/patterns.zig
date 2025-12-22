@@ -19,25 +19,19 @@ fn matches(input: []const IR, pattern: []const MatchEntry) bool {
 /// identifies the '[-]' pattern
 pub fn clearIdentify(ir_slice: []const IR) ?[]const IR {
     const pattern = [_]MatchEntry{
-        .{
-            .target = IR{ .ir_type = .branch_forwards, .ir_value = 0 },
-            .match_fn = IR.eqlType,
-        },
-        .{
-            .target = IR{ .ir_type = .change, .ir_value = -1 },
-            .match_fn = IR.eql,
-        },
-        .{
-            .target = IR{ .ir_type = .branch_backwards, .ir_value = 0 },
-            .match_fn = IR.eqlType,
-        },
+        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_forwards } },
+        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = -1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_backwards } },
     };
     return if (matches(ir_slice[0..], &pattern)) ir_slice[0..pattern.len] else null;
 }
 
-/// turns the '[-]' pattern into a Set cell to 0 IR code
+/// turns the '[-]' pattern into a "Set cell to 0" IR code
 pub fn clearFromSlice(_: []const IR) IR {
-    return IR{ .ir_type = .set_cell, .ir_value = 0 };
+    return IR{
+        .ir_type = .set_cell,
+        .ir_value = 0,
+    };
 }
 
 test "identifying transfer patterns" {

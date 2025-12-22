@@ -23,7 +23,7 @@ const JumpStack = struct {
 };
 
 pub const IR = struct {
-    ir_value: i32,
+    ir_value: i32 = 0,
     ir_type: enum {
         /// '>'(positive value) and '<'(negative value)
         move,
@@ -79,14 +79,20 @@ pub const IR = struct {
                 '+' => try ir_array.append(allocator, .{ .ir_value = 1, .ir_type = .change }),
                 '-' => try ir_array.append(allocator, .{ .ir_value = -1, .ir_type = .change }),
                 '[' => {
-                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.push(current_jump_id), .ir_type = .branch_forwards });
+                    try ir_array.append(allocator, .{
+                        .ir_value = try jump_id_stack.push(current_jump_id),
+                        .ir_type = .branch_forwards,
+                    });
                     current_jump_id += 1;
                 },
                 ']' => {
-                    try ir_array.append(allocator, .{ .ir_value = try jump_id_stack.pop(), .ir_type = .branch_backwards });
+                    try ir_array.append(allocator, .{
+                        .ir_value = try jump_id_stack.pop(),
+                        .ir_type = .branch_backwards,
+                    });
                 },
-                '.' => try ir_array.append(allocator, .{ .ir_value = 0, .ir_type = .out }),
-                ',' => try ir_array.append(allocator, .{ .ir_value = 0, .ir_type = .in }),
+                '.' => try ir_array.append(allocator, .{ .ir_type = .out }),
+                ',' => try ir_array.append(allocator, .{ .ir_type = .in }),
                 else => {},
             }
         } else |_| {}
