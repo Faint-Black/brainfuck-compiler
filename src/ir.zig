@@ -37,8 +37,8 @@ pub const IR = struct {
         out,
         /// ','(unused value)
         in,
-        /// '[-]'(unused value)
-        clear_cell,
+        /// sets current cell to a certain value
+        set_cell,
     },
 
     pub fn format(self: IR, writer: *std.Io.Writer) std.Io.Writer.Error!void {
@@ -49,7 +49,7 @@ pub const IR = struct {
             .branch_backwards => try writer.print("BRANCH_B {}", .{self.ir_value}),
             .out => try writer.print("OUT", .{}),
             .in => try writer.print("IN", .{}),
-            .clear_cell => try writer.print("CLEAR", .{}),
+            .set_cell => try writer.print("SET {}", .{self.ir_value}),
         }
     }
 

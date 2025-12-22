@@ -110,8 +110,8 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
             .in => {
                 try writer.print("call get_char\n", .{});
             },
-            .clear_cell => {
-                try writer.print("mov DWORD [cells + rcx*4], 0\n", .{});
+            .set_cell => {
+                try writer.print("mov DWORD [cells + rcx*4], {}\n", .{ir.ir_value});
             },
         }
     }

@@ -16,7 +16,7 @@ verify:
 
 $(COMPILER):
 	@echo "building compiler..."
-	@cd ../ && zig build
+	@zig build
 	@echo "done."
 
 target_x86:

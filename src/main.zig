@@ -57,7 +57,9 @@ test "test index" {
         _ = @import("clap.zig");
         _ = @import("ir.zig");
         _ = @import("optimizer.zig");
+        _ = @import("patterns.zig");
         _ = @import("x86.zig");
+        _ = @import("x64.zig");
     }
     std.testing.refAllDecls(@This());
 }
