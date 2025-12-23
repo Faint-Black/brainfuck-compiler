@@ -9,12 +9,18 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
+    // set up stdout
+    var stdout_buffer: [4096]u8 = undefined;
+    var stdout_file_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout = &stdout_file_writer.interface;
+
     // parse command line arguments
     const clap = try CLAP.parseArgs(allocator);
     defer clap.deinit(allocator);
     if (clap.anyInfoFlagIsActive()) {
-        if (clap.print_help) std.debug.print("{s}", .{CLAP.help_string});
-        if (clap.print_version) std.debug.print("{s}", .{CLAP.version_string});
+        if (clap.print_help) try stdout.print(CLAP.help_string, .{});
+        if (clap.print_version) try stdout.print(CLAP.version_string, .{});
+        try stdout.flush();
         return;
     }
 
@@ -37,7 +43,8 @@ pub fn main() !void {
         .x86 => try @import("x86.zig").codegen(optimized_ir_code, allocator),
         .x64 => try @import("x64.zig").codegen(optimized_ir_code, allocator),
     } catch |err| {
-        std.debug.print("ERROR: No valid target provided!\n", .{});
+        try stdout.print("ERROR: No valid target provided!\n", .{});
+        try stdout.flush();
         return err;
     };
     defer allocator.free(assembly);
@@ -48,7 +55,8 @@ pub fn main() !void {
         defer out_file.close();
         try out_file.writeAll(assembly);
     } else {
-        std.debug.print("{s}\n", .{assembly});
+        _ = try stdout.write(assembly);
+        try stdout.flush();
     }
 }
 
