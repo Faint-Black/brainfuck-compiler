@@ -4,13 +4,13 @@ const accumulate = @import("optimizer.zig").accumulate;
 
 const MatchEntry = struct {
     target: IR,
-    match_fn: *const fn (IR, IR) bool,
+    match_fn: fn (IR, IR) bool,
 };
 
 /// check if all input IR codes match the given pattern
-fn matches(input: []const IR, pattern: []const MatchEntry) bool {
+fn matches(input: []const IR, comptime pattern: []const MatchEntry) bool {
     if (input.len < pattern.len) return false;
-    for (pattern, 0..) |match_entry, i| {
+    inline for (pattern, 0..) |match_entry, i| {
         if (!match_entry.match_fn(input[i], match_entry.target)) return false;
     }
     return true;

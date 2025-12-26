@@ -4,10 +4,13 @@ const patterns = @import("patterns.zig");
 
 /// takes in a raw IR array and outputs an optimized IR array
 pub fn optimize(raw_ir: []IR, allocator: std.mem.Allocator) ![]IR {
+    // step 1
     const accumulated_ir = try accumulate(raw_ir, allocator);
     defer allocator.free(accumulated_ir);
+    // step 2
     const cleaned_ir = try clean(accumulated_ir, allocator);
     defer allocator.free(cleaned_ir);
+    // step 3
     return try substitute(cleaned_ir, allocator);
 }
 
