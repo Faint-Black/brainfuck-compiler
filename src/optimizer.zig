@@ -24,13 +24,17 @@ pub fn accumulate(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     for (1..ir_array.len) |i| {
         current = ir_array[i];
         previous = ir_array[i - 1];
-        const can_accumulate = switch (current.ir_type) {
+        const can_accumulate = switch (current) {
             .change => true,
             .move => true,
             else => false,
         };
         if (current.eqlType(previous) and can_accumulate) {
-            accumulator.ir_value += current.ir_value;
+            switch (accumulator) {
+                .change => |*value| value.* += current.change,
+                .move => |*value| value.* += current.move,
+                else => unreachable,
+            }
         } else {
             try result.append(allocator, accumulator);
             accumulator = current;
@@ -46,8 +50,8 @@ pub fn clean(ir_array: []IR, allocator: std.mem.Allocator) ![]IR {
     var result: std.ArrayList(IR) = .empty;
     defer result.deinit(allocator);
     for (ir_array) |ir| {
-        const empty_move = (ir.ir_type == .move and ir.ir_value == 0);
-        const empty_change = (ir.ir_type == .change and ir.ir_value == 0);
+        const empty_move = ir.eql(IR{ .move = 0 });
+        const empty_change = ir.eql(IR{ .change = 0 });
         if (!empty_move and !empty_change) try result.append(allocator, ir);
     }
     return try result.toOwnedSlice(allocator);

@@ -87,22 +87,22 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
 
     _ = try writer.write(prolog);
     for (ir_array) |ir| {
-        switch (ir.ir_type) {
-            .move => {
-                try writer.print("add rcx, {}\n", .{ir.ir_value});
+        switch (ir) {
+            .move => |offset| {
+                try writer.print("add rcx, {}\n", .{offset});
             },
-            .change => {
-                try writer.print("add DWORD [cells + rcx*4], {}\n", .{ir.ir_value});
+            .change => |value| {
+                try writer.print("add DWORD [cells + rcx*4], {}\n", .{value});
             },
-            .branch_forwards => {
+            .branch_forwards => |id| {
                 try writer.print("cmp DWORD [cells + rcx*4], 0\n", .{});
-                try writer.print("je .END_BRACKET_{}\n", .{ir.ir_value});
-                try writer.print(".START_BRACKET_{}:\n", .{ir.ir_value});
+                try writer.print("je .END_BRACKET_{}\n", .{id});
+                try writer.print(".START_BRACKET_{}:\n", .{id});
             },
-            .branch_backwards => {
+            .branch_backwards => |id| {
                 try writer.print("cmp DWORD [cells + rcx*4], 0\n", .{});
-                try writer.print("jne .START_BRACKET_{}\n", .{ir.ir_value});
-                try writer.print(".END_BRACKET_{}:\n", .{ir.ir_value});
+                try writer.print("jne .START_BRACKET_{}\n", .{id});
+                try writer.print(".END_BRACKET_{}:\n", .{id});
             },
             .out => {
                 try writer.print("call print_char\n", .{});
@@ -110,12 +110,12 @@ pub fn codegen(ir_array: []IR, allocator: std.mem.Allocator) ![]u8 {
             .in => {
                 try writer.print("call get_char\n", .{});
             },
-            .set_cell => {
-                try writer.print("mov DWORD [cells + rcx*4], {}\n", .{ir.ir_value});
+            .set_cell => |value| {
+                try writer.print("mov DWORD [cells + rcx*4], {}\n", .{value});
             },
-            .transfer_accumulating => {
+            .transfer_accumulating => |offset| {
                 try writer.print("mov eax, DWORD [cells + rcx*4]\n", .{});
-                try writer.print("add DWORD [(cells + ({} * 4)) + rcx*4], eax\n", .{ir.ir_value});
+                try writer.print("add DWORD [(cells + ({} * 4)) + rcx*4], eax\n", .{offset});
                 try writer.print("mov DWORD [cells + rcx*4], 0\n", .{});
             },
         }

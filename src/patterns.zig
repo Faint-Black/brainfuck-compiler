@@ -19,56 +19,50 @@ fn matches(input: []const IR, pattern: []const MatchEntry) bool {
 /// identifies the '[-]' pattern
 pub fn clearIdentify(ir_slice: []const IR) ?[]const IR {
     const pattern = [_]MatchEntry{
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_forwards } },
-        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = -1 } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_backwards } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_forwards = undefined } },
+        .{ .match_fn = IR.eql, .target = IR{ .change = -1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_backwards = undefined } },
     };
     return if (matches(ir_slice[0..], &pattern)) ir_slice[0..pattern.len] else null;
 }
 
 /// turns the '[-]' pattern into a "Set cell to 0" IR code
 pub fn clearFromSlice(_: []const IR) IR {
-    return IR{
-        .ir_type = .set_cell,
-        .ir_value = 0,
-    };
+    return IR{ .set_cell = 0 };
 }
 
 /// identifies the '[->>>+<<<]' pattern
 pub fn transferAccumulatingIdentify(ir_slice: []const IR) ?[]const IR {
     // [->>+<<]
     const left_minus_pattern = [_]MatchEntry{
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_forwards } },
-        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = -1 } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .move } },
-        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = 1 } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .move } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_backwards } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_forwards = undefined } },
+        .{ .match_fn = IR.eql, .target = IR{ .change = -1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .move = undefined } },
+        .{ .match_fn = IR.eql, .target = IR{ .change = 1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .move = undefined } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_backwards = undefined } },
     };
     // [>>+<<-]
     const right_minus_pattern = [_]MatchEntry{
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_forwards } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .move } },
-        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = 1 } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .move } },
-        .{ .match_fn = IR.eql, .target = IR{ .ir_type = .change, .ir_value = -1 } },
-        .{ .match_fn = IR.eqlType, .target = IR{ .ir_type = .branch_backwards } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_forwards = undefined } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .move = undefined } },
+        .{ .match_fn = IR.eql, .target = IR{ .change = 1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .move = undefined } },
+        .{ .match_fn = IR.eql, .target = IR{ .change = -1 } },
+        .{ .match_fn = IR.eqlType, .target = IR{ .branch_backwards = undefined } },
     };
 
     const matches_lmp: bool = matches(ir_slice[0..], &left_minus_pattern);
     const matches_rmp: bool = matches(ir_slice[0..], &right_minus_pattern);
-    const moves_match: bool = if (matches_lmp) (ir_slice[2].ir_value == -ir_slice[4].ir_value) else if (matches_rmp) (ir_slice[1].ir_value == -ir_slice[3].ir_value) else false;
+    const moves_match: bool = if (matches_lmp) (ir_slice[2].move == -ir_slice[4].move) else if (matches_rmp) (ir_slice[1].move == -ir_slice[3].move) else false;
 
     return if (matches_lmp and moves_match) ir_slice[0..left_minus_pattern.len] else if (matches_rmp and moves_match) ir_slice[0..right_minus_pattern.len] else null;
 }
 
 /// turns the '[->>>+<<<]' pattern into a "Transfer accumulating" IR code
 pub fn transferAccumulatingFromSlice(ir_slice: []const IR) IR {
-    const offset: i32 = if (ir_slice[1].ir_type == .change) ir_slice[2].ir_value else ir_slice[1].ir_value;
-    return IR{
-        .ir_type = .transfer_accumulating,
-        .ir_value = offset,
-    };
+    const offset: i32 = if (ir_slice[1] == .change) ir_slice[2].move else ir_slice[1].move;
+    return IR{ .transfer_accumulating = offset };
 }
 
 test "identifying cell clear patterns" {

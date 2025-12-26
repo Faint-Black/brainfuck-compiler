@@ -22,46 +22,52 @@ const JumpStack = struct {
     }
 };
 
-pub const IR = struct {
-    ir_value: i32 = 0,
-    ir_type: enum {
-        /// '>'(positive value) and '<'(negative value)
-        move,
-        /// '+'(positive value) and '-'(negative value)
-        change,
-        /// '['(unique label id)
-        branch_forwards,
-        /// ']'(matching label id)
-        branch_backwards,
-        /// '.'(unused value)
-        out,
-        /// ','(unused value)
-        in,
-        /// cell(current) = value
-        set_cell,
-        /// cell(current + offset) += cell(current); cell(current) = 0
-        transfer_accumulating,
-    },
+pub const IR = union(enum) {
+    /// '>'(positive value) and '<'(negative value)
+    move: i32,
+    /// '+'(positive value) and '-'(negative value)
+    change: i32,
+    /// '['(unique label id)
+    branch_forwards: i32,
+    /// ']'(matching label id)
+    branch_backwards: i32,
+    /// '.'(unused value)
+    out: void,
+    /// ': i32,'(unused value)
+    in: void,
+    /// cell(current) = value
+    set_cell: i32,
+    /// cell(current + offset) += cell(current); cell(current) = 0
+    transfer_accumulating: i32,
 
     pub fn format(self: IR, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        switch (self.ir_type) {
-            .move => try writer.print("MOVE {}", .{self.ir_value}),
-            .change => try writer.print("CHANGE {}", .{self.ir_value}),
-            .branch_forwards => try writer.print("BRANCH_F {}", .{self.ir_value}),
-            .branch_backwards => try writer.print("BRANCH_B {}", .{self.ir_value}),
+        switch (self) {
+            .move => |offset| try writer.print("MOVE {}", .{offset}),
+            .change => |value| try writer.print("CHANGE {}", .{value}),
+            .branch_forwards => |id| try writer.print("BRANCH_F {}", .{id}),
+            .branch_backwards => |id| try writer.print("BRANCH_B {}", .{id}),
             .out => try writer.print("OUT", .{}),
             .in => try writer.print("IN", .{}),
-            .set_cell => try writer.print("SET {}", .{self.ir_value}),
-            .transfer_accumulating => try writer.print("TRANSFER(+) {}", .{self.ir_value}),
+            .set_cell => |value| try writer.print("SET {}", .{value}),
+            .transfer_accumulating => |offset| try writer.print("TRANSFER(+) {}", .{offset}),
         }
     }
 
     pub fn eqlType(self: IR, other: IR) bool {
-        return self.ir_type == other.ir_type;
+        return std.meta.activeTag(self) == std.meta.activeTag(other);
     }
 
     pub fn eqlValue(self: IR, other: IR) bool {
-        return self.ir_value == other.ir_value;
+        return self.eqlType(other) and switch (self) {
+            .move => self.move == other.move,
+            .change => self.change == other.change,
+            .branch_forwards => self.branch_forwards == other.branch_forwards,
+            .branch_backwards => self.branch_backwards == other.branch_backwards,
+            .out => true,
+            .in => true,
+            .set_cell => self.set_cell == other.set_cell,
+            .transfer_accumulating => self.transfer_accumulating == other.transfer_accumulating,
+        };
     }
 
     pub fn eql(self: IR, other: IR) bool {
@@ -77,25 +83,23 @@ pub const IR = struct {
 
         while (reader.takeByte()) |c| {
             switch (c) {
-                '>' => try ir_array.append(allocator, .{ .ir_value = 1, .ir_type = .move }),
-                '<' => try ir_array.append(allocator, .{ .ir_value = -1, .ir_type = .move }),
-                '+' => try ir_array.append(allocator, .{ .ir_value = 1, .ir_type = .change }),
-                '-' => try ir_array.append(allocator, .{ .ir_value = -1, .ir_type = .change }),
+                '>' => try ir_array.append(allocator, IR{ .move = 1 }),
+                '<' => try ir_array.append(allocator, IR{ .move = -1 }),
+                '+' => try ir_array.append(allocator, IR{ .change = 1 }),
+                '-' => try ir_array.append(allocator, IR{ .change = -1 }),
                 '[' => {
-                    try ir_array.append(allocator, .{
-                        .ir_value = try jump_id_stack.push(current_jump_id),
-                        .ir_type = .branch_forwards,
+                    try ir_array.append(allocator, IR{
+                        .branch_forwards = try jump_id_stack.push(current_jump_id),
                     });
                     current_jump_id += 1;
                 },
                 ']' => {
-                    try ir_array.append(allocator, .{
-                        .ir_value = try jump_id_stack.pop(),
-                        .ir_type = .branch_backwards,
+                    try ir_array.append(allocator, IR{
+                        .branch_backwards = try jump_id_stack.pop(),
                     });
                 },
-                '.' => try ir_array.append(allocator, .{ .ir_type = .out }),
-                ',' => try ir_array.append(allocator, .{ .ir_type = .in }),
+                '.' => try ir_array.append(allocator, IR.out),
+                ',' => try ir_array.append(allocator, IR.in),
                 else => {},
             }
         } else |_| {}
