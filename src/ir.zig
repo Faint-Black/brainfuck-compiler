@@ -1,13 +1,13 @@
 const std = @import("std");
 
 const JumpStack = struct {
-    stack: [2048]i32,
+    stack: [2048]u64,
     size: usize,
 
     pub const empty = JumpStack{ .stack = undefined, .size = 0 };
 
     /// returns pushed value
-    pub fn push(self: *JumpStack, value: i32) !i32 {
+    pub fn push(self: *JumpStack, value: u64) !u64 {
         if (self.size >= self.stack.len) return error.StackOverflow;
         self.stack[self.size] = value;
         self.size += 1;
@@ -15,7 +15,7 @@ const JumpStack = struct {
     }
 
     /// returns popped value
-    pub fn pop(self: *JumpStack) !i32 {
+    pub fn pop(self: *JumpStack) !u64 {
         if (self.size == 0) return error.StackUnderflow;
         self.size -= 1;
         return self.stack[self.size];
@@ -28,9 +28,9 @@ pub const IR = union(enum) {
     /// '+'(positive value) and '-'(negative value)
     change: i32,
     /// '['(unique label id)
-    branch_forwards: i32,
+    branch_forwards: u64,
     /// ']'(matching label id)
-    branch_backwards: i32,
+    branch_backwards: u64,
     /// '.'(unused value)
     out: void,
     /// ': i32,'(unused value)
@@ -79,7 +79,7 @@ pub const IR = union(enum) {
         defer ir_array.deinit(allocator);
 
         var jump_id_stack: JumpStack = .empty;
-        var current_jump_id: i32 = 0;
+        var current_jump_id: u64 = 0;
 
         while (reader.takeByte()) |c| {
             switch (c) {
